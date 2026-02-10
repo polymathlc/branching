@@ -843,7 +843,7 @@ footer {
   <section class="section">
     <h2>Interactive Branching Method</h2>
     <div class="section-divider"></div>
-    <p style="margin-bottom:8px">Adjust the fractions to see how the branching diagram updates. The leftover fraction of the total is calculated by multiplying along the branch.</p>
+    <p style="margin-bottom:8px">Adjust the fractions to see how the branching diagram updates. Values are shown in <strong>units (u)</strong> and <strong>parts (p)</strong> — the leftover of the total is found by counting parts.</p>
   </section>
 
   <div class="info-label">BRANCHING METHOD CALCULATOR</div>
@@ -874,9 +874,9 @@ footer {
     <h2>Key Rules for Branching</h2>
     <div class="section-divider"></div>
     <div class="rules-box">
-      <div class="rule"><strong>Rule 1:</strong> The top branch + bottom branch must equal 1 whole. The numerators must add up to the denominator.</div>
-      <div class="rule"><strong>Rule 2:</strong> Fractions in the second layer refer to a fraction of the <em>remainder</em>, NOT the total. You cannot directly compare them to the total.</div>
-      <div class="rule"><strong>Rule 3:</strong> To convert a branch fraction to a fraction of the total, <strong>multiply</strong> it by the remainder fraction from the previous branch.</div>
+      <div class="rule"><strong>Rule 1:</strong> The top branch + bottom branch must equal the total units. e.g. 1st Portion (3u) + Remainder (2u) = Total (5u).</div>
+      <div class="rule"><strong>Rule 2:</strong> The second fraction applies to the <em>remainder</em>, NOT the total. Subdivide the remainder units into parts (p) so the second denominator fits evenly.</div>
+      <div class="rule"><strong>Rule 3:</strong> To find the leftover as a fraction of the total, express both as the same kind of part: <strong>leftover parts ÷ total parts</strong>.</div>
       <div class="rule"><strong>Rule 4:</strong> For "additional X" type questions, use a pull-down model and work backwards step by step.</div>
     </div>
   </section>
@@ -1081,66 +1081,65 @@ function getBranchVals() {
 
 function renderBranch() {
   var v = getBranchVals();
-  var r1n = v.f1d - v.f1n;
-  var r1d = v.f1d;
-  var r2n = v.f2d - v.f2n;
-  var r2d = v.f2d;
-  var leftNum = r2n * r1n;
-  var leftDen = r2d * r1d;
-  var g = gcd(leftNum, leftDen);
-  var sLeftN = leftNum / g;
-  var sLeftD = leftDen / g;
-  var secNum = v.f2n * r1n;
-  var secDen = v.f2d * r1d;
-  var g2 = gcd(secNum, secDen);
+  var remUnits = v.f1d - v.f1n;
+  var sub = lcm(remUnits, v.f2d) / remUnits;
+  var totalParts = v.f1d * sub;
+  var firstParts = v.f1n * sub;
+  var remParts = remUnits * sub;
+  var scaleFactor = remParts / v.f2d;
+  var secondParts = v.f2n * scaleFactor;
+  var leftoverParts = (v.f2d - v.f2n) * scaleFactor;
+  var g = gcd(leftoverParts, totalParts);
+  var sLeftN = leftoverParts / g;
+  var sLeftD = totalParts / g;
+  var ul2 = sub > 1 ? 'p' : 'u';
 
   var svg = '<svg viewBox="0 0 620 270" class="branch-svg">';
   // Total node
   svg += '<rect x="10" y="105" width="100" height="55" rx="4" fill="#fff" stroke="#ccc" stroke-width="1.2"/>';
   svg += '<text x="60" y="123" text-anchor="middle" font-size="9" fill="#999" font-family="Century Gothic,sans-serif">Total</text>';
-  svg += '<text x="50" y="142" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + v.f1d + '</text>';
-  svg += '<line x1="46" y1="144" x2="74" y2="144" stroke="#333" stroke-width="1"/>';
-  svg += '<text x="60" y="155" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + v.f1d + '</text>';
+  svg += '<text x="60" y="148" text-anchor="middle" font-size="18" fill="#333" font-family="Century Gothic,sans-serif">' + v.f1d + 'u</text>';
 
   // Branch lines
   svg += '<line x1="110" y1="120" x2="185" y2="60" stroke="#aaa" stroke-width="1"/>';
   svg += '<line x1="110" y1="145" x2="185" y2="185" stroke="#aaa" stroke-width="1"/>';
+  // Branch labels (fractions applied)
+  svg += '<text x="138" y="82" text-anchor="middle" font-size="8" fill="#999" font-family="Century Gothic,sans-serif">' + v.f1n + '/' + v.f1d + '</text>';
+  svg += '<text x="138" y="172" text-anchor="middle" font-size="8" fill="#999" font-family="Century Gothic,sans-serif">' + remUnits + '/' + v.f1d + '</text>';
 
   // 1st portion
   svg += '<rect x="185" y="32" width="115" height="55" rx="4" fill="#f5f5f5" stroke="#ccc" stroke-width="1.2"/>';
   svg += '<text x="242" y="50" text-anchor="middle" font-size="9" fill="#999" font-family="Century Gothic,sans-serif">1st Portion</text>';
-  svg += '<text x="232" y="69" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + v.f1n + '</text>';
-  svg += '<line x1="228" y1="71" x2="256" y2="71" stroke="#333" stroke-width="1"/>';
-  svg += '<text x="242" y="82" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + v.f1d + '</text>';
+  svg += '<text x="242" y="75" text-anchor="middle" font-size="18" fill="#333" font-family="Century Gothic,sans-serif">' + v.f1n + 'u</text>';
 
   // Remainder
   svg += '<rect x="185" y="158" width="115" height="55" rx="4" fill="#fff" stroke="#ccc" stroke-width="1.2"/>';
   svg += '<text x="242" y="176" text-anchor="middle" font-size="9" fill="#999" font-family="Century Gothic,sans-serif">Remainder</text>';
-  svg += '<text x="232" y="195" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + r1n + '</text>';
-  svg += '<line x1="228" y1="197" x2="256" y2="197" stroke="#333" stroke-width="1"/>';
-  svg += '<text x="242" y="208" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + r1d + '</text>';
+  svg += '<text x="242" y="198" text-anchor="middle" font-size="18" fill="#333" font-family="Century Gothic,sans-serif">' + remUnits + 'u</text>';
+  if (sub > 1) {
+    svg += '<text x="242" y="211" text-anchor="middle" font-size="8" fill="#999" font-family="Century Gothic,sans-serif">= ' + remParts + 'p</text>';
+  }
 
   // Branch lines from remainder
   svg += '<line x1="300" y1="175" x2="375" y2="120" stroke="#aaa" stroke-width="1"/>';
   svg += '<line x1="300" y1="198" x2="375" y2="238" stroke="#aaa" stroke-width="1"/>';
+  // Branch labels (fractions applied to remainder)
+  svg += '<text x="328" y="140" text-anchor="middle" font-size="8" fill="#999" font-family="Century Gothic,sans-serif">' + v.f2n + '/' + v.f2d + '</text>';
+  svg += '<text x="328" y="226" text-anchor="middle" font-size="8" fill="#999" font-family="Century Gothic,sans-serif">' + (v.f2d - v.f2n) + '/' + v.f2d + '</text>';
 
   // 2nd portion
   svg += '<rect x="375" y="93" width="110" height="55" rx="4" fill="#f0f0f0" stroke="#ccc" stroke-width="1.2"/>';
   svg += '<text x="430" y="111" text-anchor="middle" font-size="9" fill="#999" font-family="Century Gothic,sans-serif">2nd Portion</text>';
-  svg += '<text x="420" y="130" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + v.f2n + '</text>';
-  svg += '<line x1="416" y1="132" x2="444" y2="132" stroke="#333" stroke-width="1"/>';
-  svg += '<text x="430" y="143" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + v.f2d + '</text>';
+  svg += '<text x="430" y="136" text-anchor="middle" font-size="18" fill="#333" font-family="Century Gothic,sans-serif">' + secondParts + ul2 + '</text>';
 
   // Leftover
   svg += '<rect x="375" y="210" width="110" height="55" rx="4" fill="#fff" stroke="#333" stroke-width="1.5"/>';
   svg += '<text x="430" y="228" text-anchor="middle" font-size="9" fill="#666" font-family="Century Gothic,sans-serif">Leftover</text>';
-  svg += '<text x="420" y="247" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + r2n + '</text>';
-  svg += '<line x1="416" y1="249" x2="444" y2="249" stroke="#333" stroke-width="1"/>';
-  svg += '<text x="430" y="260" text-anchor="middle" font-size="15" fill="#333" font-family="Century Gothic,sans-serif">' + r2d + '</text>';
+  svg += '<text x="430" y="253" text-anchor="middle" font-size="18" fill="#333" font-family="Century Gothic,sans-serif">' + leftoverParts + ul2 + '</text>';
 
-  // Multiply arrow
+  // Arrow from leftover to result
   svg += '<path d="M485 238 Q520 238 520 200 Q520 178 508 178" stroke="#888" stroke-width="1" fill="none" stroke-dasharray="3,3"/>';
-  svg += '<text x="530" y="212" font-size="9" fill="#888" font-family="Century Gothic,sans-serif">× remainder</text>';
+  svg += '<text x="535" y="212" font-size="9" fill="#888" font-family="Century Gothic,sans-serif">' + leftoverParts + ul2 + ' out of ' + totalParts + ul2 + '</text>';
 
   // Result box
   svg += '<rect x="502" y="148" width="108" height="48" rx="4" fill="#333" stroke="none"/>';
@@ -1153,9 +1152,12 @@ function renderBranch() {
 
   document.getElementById('branchSvgContainer').innerHTML = svg;
 
-  var pct = (leftNum / leftDen * 100).toFixed(1);
-  var calcHTML = '<div>Leftover as fraction of remainder: ' + frac(r2n, r2d) + '</div>';
-  calcHTML += '<div style="display:flex; align-items:center; flex-wrap:wrap">Leftover as fraction of total: ' + frac(r2n, r2d) + ' <span style="margin:0 4px">×</span> ' + frac(r1n, r1d) + ' <span style="margin:0 4px">=</span> ' + frac(sLeftN, sLeftD) + ' <span style="margin:0 4px">=</span> <strong>' + pct + '%</strong></div>';
+  var pct = (leftoverParts / totalParts * 100).toFixed(1);
+  var calcHTML = '<div>Remainder: <strong>' + remUnits + 'u</strong>';
+  if (sub > 1) calcHTML += ' &rarr; each unit &divide; ' + sub + ' = <strong>' + remParts + ' parts</strong>';
+  calcHTML += '</div>';
+  calcHTML += '<div>2nd Portion: <strong>' + secondParts + ul2 + '</strong> &nbsp;|&nbsp; Leftover: <strong>' + leftoverParts + ul2 + '</strong> &nbsp;|&nbsp; Total: <strong>' + totalParts + ul2 + '</strong></div>';
+  calcHTML += '<div style="display:flex; align-items:center; flex-wrap:wrap">Leftover of total: ' + frac(leftoverParts, totalParts) + ' <span style="margin:0 4px">=</span> ' + frac(sLeftN, sLeftD) + ' <span style="margin:0 4px">=</span> <strong>' + pct + '%</strong></div>';
   document.getElementById('branchCalc').innerHTML = calcHTML;
 }
 
